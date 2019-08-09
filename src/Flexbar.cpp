@@ -72,5 +72,28 @@ int main(int argc, const char* argv[]){
         //TODO //overwrite adapter parameters in options
         startComputation(o);
 
+
+    //o.readsFile     for extractReads
+//     o.readsFile = "";
+
+
+    getOptionValue(o.adapterFile, parser, "adapters");
+    *out << "Adapter file:          " << o.adapterFile << endl;
+    o.adapRm = NORMAL;
+    o.useAdapterFile = true;
+
+
+    o.bundleSize = 20;
+	o.a_match = o.barcode_match;
+    o.a_mismatch = o.barcode_mismatch;
+    o.a_gapCost = o.barcode_gapCost;
+	o.a_errorRate = o.barcode_errorRate;
+    o.a_end = LTAIL;
+    rcMode    = RCOFF;
+
+    //comp
+    o.a_end = RTAIL;
+    o.rcMode = RCONLY;
+
 	return 0;
 }

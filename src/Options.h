@@ -14,7 +14,8 @@
 
 struct Options{
 
-	std::string readsFile, readsFile2, barReadsFile, regionsFile;
+	std::string readsFile, readsFile2, barReadsFile;
+
 	std::string outReadsFile, outReadsFile2, outLogFile;
 	std::string barcodeFile, adapterFile, barcode2File, adapter2File;
 	std::string adapterSeq, targetName, logAlignStr, outCompression;
@@ -33,9 +34,11 @@ struct Options{
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
 	int maxUncalled, min_readLen, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;
-	int a_match, a_mismatch, a_gapCost, b_match, b_mismatch, b_gapCost, a_cycles;
 
-	float a_errorRate, b_errorRate, h_errorRate;
+	int a_match, a_mismatch, a_gapCost, b_match, b_mismatch, b_gapCost, barcode_match, barcode_mismatch, barcode_gapCost, a_cycles;
+
+
+	float a_errorRate, b_errorRate, barcode_errorRate, h_errorRate;
 
 	flexbar::TrimEnd         a_end, b_end, arc_end;
 	flexbar::FileFormat      format;
@@ -59,9 +62,11 @@ struct Options{
 	Options(){
 
 		using namespace flexbar;
+
                 //TODO add regions file input
 		// TODO replace adapter and barcode options with primer and barcode and extract reads removeCDNA options splitReads
                 // Inputs whitelist read bamfile output P1 log file barcode assigment
+
 		readsFile      = "";
 		readsFile2     = "";
 		barReadsFile   = "";
@@ -75,6 +80,10 @@ struct Options{
 		outCompression = "";
 		htrimLeft      = "";
 		htrimRight     = "";
+
+                bamFile        = "";
+                whitelist      = "";
+
 
 		isPaired          = false;
 		useAdapterFile    = false;
@@ -193,13 +202,18 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("N", "bundle", "Number of (paired) reads per thread.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("M", "bundles", "Process only certain number of bundles for testing.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("t", "target", "Prefix for output file names or paths.", ARG::OUTPUT_PREFIX));
-	addOption(parser, ArgParseOption("r", "reads", "Fasta/q file or stdin (-) with reads that may contain barcodes.", ARG::INPUT_FILE));
+	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("p", "reads2", "Second input file of paired reads, gz and bz2 files supported.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("i", "interleaved", "Interleaved format for first input set with paired reads."));
 	addOption(parser, ArgParseOption("I", "iupac", "Accept iupac symbols in reads and convert to N if not ATCG."));
 
+        setAdvanced(parser, "reads2");
+        setAdvanced(parser, "interleaved");
+        setAdvanced(parser, "iupac");
+
+
 	addSection(parser, "Barcode detection");
-	addOption(parser, ArgParseOption("b",  "barcodes", "Fasta file with barcodes for demultiplexing, may contain N.", ARG::INPUT_FILE));
+	addOption(parser, ArgParseOption("b",  "barcodes", "Fasta file with potential barcodes determine from illumina reads.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("b2", "barcodes2", "Additional barcodes file for second read set in paired mode.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("br", "barcode-reads", "Fasta/q file containing separate barcode reads for detection.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("bo", "barcode-min-overlap", "Minimum overlap of barcode and read. Default: barcode length.", ARG::INTEGER));
@@ -212,14 +226,23 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));
 
+
+    setAdvanced(parser, "barcodes2");
+    setAdvanced(parser, "barcode-reads");
+    setAdvanced(parser, "barcode-trim-end");
+    setAdvanced(parser, "barcode-tail-length");
+    setAdvanced(parser, "barcode-keep");
+    setAdvanced(parser, "barcode-unassigned");
+
+
 	addSection(parser, "Adapter removal");
 	addOption(parser, ArgParseOption("a",  "adapters", "Fasta file with adapters for removal that may contain N.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("a2", "adapters2", "File with extra adapters for second read set in paired mode.", ARG::INPUT_FILE));
-	addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
+//     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
 	addOption(parser, ArgParseOption("aa", "adapter-preset", "", ARG::STRING));
 	addOption(parser, ArgParseOption("ao", "adapter-min-overlap", "Minimum overlap for removal without pair overlap.", ARG::INTEGER));
-	addOption(parser, ArgParseOption("ae", "adapter-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
-	addOption(parser, ArgParseOption("at", "adapter-trim-end", "Type of removal, see section trim-end modes.", ARG::STRING));
+// 	addOption(parser, ArgParseOption("ae", "adapter-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
+// 	addOption(parser, ArgParseOption("at", "adapter-trim-end", "Type of removal, see section trim-end modes.", ARG::STRING));
 	addOption(parser, ArgParseOption("an", "adapter-tail-length", "Region size for tail trim-end modes. Default: adapter length.", ARG::INTEGER));
 	// addOption(parser, ArgParseOption("ah", "adapter-overhang", "Overhang at read ends in right and left modes.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("ax", "adapter-relaxed", "Skip restriction to pass read ends in right and left modes."));
@@ -231,9 +254,28 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("ar", "adapter-read-set", "Consider only single read set for adapters.", ARG::STRING));
 	addOption(parser, ArgParseOption("ak", "adapter-trimmed-out", "Modify that trimmed reads are kept.", ARG::STRING));
 	addOption(parser, ArgParseOption("ay", "adapter-cycles", "Number of adapter removal cycles.", ARG::INTEGER));
+
+    setAdvanced(parser, "adapters2");
+    setAdvanced(parser, "adapter-preset");
+    setAdvanced(parser, "adapter-tail-length");
+    setAdvanced(parser, "adapter-relaxed");
+    setAdvanced(parser, "adapter-pair-overlap");
+    setAdvanced(parser, "adapter-min-poverlap");
+    setAdvanced(parser, "adapter-revcomp-end");
+    setAdvanced(parser, "adapter-add-barcode");
+    setAdvanced(parser, "adapter-read-set");
+    setAdvanced(parser, "adapter-trimmed-out");
+    setAdvanced(parser, "adapter-cycles");
+
+    addOption(parser, ArgParseOption("ae", "adapter-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
+    addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
+    addOption(parser, ArgParseOption("at", "adapter-trim-end", "Type of removal, see section trim-end modes.", ARG::STRING));
 	addOption(parser, ArgParseOption("am", "adapter-match", "Alignment match score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("ai", "adapter-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("ag", "adapter-gap", "Alignment gap score.", ARG::INTEGER));
+
+    setAdvanced(parser, "adapter-trim-end");
+
 
 	// addSection(parser, "Joining paired reads");
 	// addOption(parser, ArgParseOption("j",  "join", "Align paired reads and join them in case of sufficient overlap."));
@@ -282,9 +324,17 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("alt", "alternative", "Print all valid alignments between query and read. Additonally mark best alignment with b and log difference between best and second best alignment if it exists"));
 	addOption(parser, ArgParseOption("o", "stdout-log", "Write statistics to stdout instead of target log file."));
 	addOption(parser, ArgParseOption("O", "output-log", "Output file for logging instead of target prefix usage.", ARG::OUTPUT_FILE));
-	addOption(parser, ArgParseOption("g", "removal-tags", "Tag reads that are subject to adapter or barcode removal."));
+	addOption(parser, ArgParseOption("g", "removal-tags", "Do not tag reads that are subject to adapter or barcode removal."));
+
+    setAdvanced(parser, "stdout-log");
+    setAdvanced(parser, "removal-tags");
+
 	addOption(parser, ArgParseOption("e", "number-tags", "Replace read tags by ascending number to save space."));
 	addOption(parser, ArgParseOption("d", "umi-tags", "Capture UMIs in reads at barcode or adapter N positions."));
+
+    setAdvanced(parser, "number-tags");
+    setAdvanced(parser, "umi-tags");
+
 
 
 	hideOption(parser, "version");
@@ -292,10 +342,11 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setAdvanced(parser, "barcodes2");
 	setAdvanced(parser, "barcode-tail-length");
 	setAdvanced(parser, "barcode-keep");
-	setAdvanced(parser, "barcode-unassigned");
+	setAdvanced(parser, "barcode-unassigned");/*
 	setAdvanced(parser, "barcode-match");
 	setAdvanced(parser, "barcode-mismatch");
-	setAdvanced(parser, "barcode-gap");
+
+	setAdvanced(parser, "barcode-gap");*/
 
 	setAdvanced(parser, "adapter-seq");
 	setAdvanced(parser, "adapter-tail-length");
@@ -306,10 +357,10 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setAdvanced(parser, "adapter-add-barcode");
 	setAdvanced(parser, "adapter-trimmed-out");
 	setAdvanced(parser, "adapter-read-set");
-	setAdvanced(parser, "adapter-cycles");
+	setAdvanced(parser, "adapter-cycles");/*
 	setAdvanced(parser, "adapter-match");
 	setAdvanced(parser, "adapter-mismatch");
-	setAdvanced(parser, "adapter-gap");
+	setAdvanced(parser, "adapter-gap")*/;
 	// setAdvanced(parser, "adapter-overhang");
 
 	setAdvanced(parser, "post-trim-length");
@@ -390,20 +441,30 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setDefaultValue(parser, "max-uncalled",         "0");
 	setDefaultValue(parser, "min-read-length",      "18");
 
+/*
+    addOption(parser, ArgParseOption("bm", "barcode-match", "Alignment match score.", ARG::INTEGER));
+	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
+	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));*/
+
+
 	setDefaultValue(parser, "barcode-trim-end",   "LTAIL");
 	setDefaultValue(parser, "barcode-error-rate", "0.0");
 	setDefaultValue(parser, "barcode-match",      "1");
 	setDefaultValue(parser, "barcode-mismatch",   "-1");
 	setDefaultValue(parser, "barcode-gap",        "-9");
 
-	setDefaultValue(parser, "adapter-trim-end",     "RIGHT");
+
+	setDefaultValue(parser, "adapter-trim-end",     "ANY");
+
 	setDefaultValue(parser, "adapter-min-overlap",  "3");
 	setDefaultValue(parser, "adapter-error-rate",   "0.1");
 	setDefaultValue(parser, "adapter-min-poverlap", "40");
 	setDefaultValue(parser, "adapter-cycles",       "1");
 	setDefaultValue(parser, "adapter-match",        "1");
 	setDefaultValue(parser, "adapter-mismatch",     "-1");
-	setDefaultValue(parser, "adapter-gap",          "-6");
+	setDefaultValue(parser, "adapter-gap",          "-1");
+    setDefaultValue(parser, "adapter-revcomp",      "ON);
+
 	// setDefaultValue(parser, "adapter-overhang",     "0");
 
 	setDefaultValue(parser, "qtrim-threshold", "20");
@@ -500,7 +561,7 @@ void parseCmdLine(seqan::ArgumentParser &parser, std::string version, int argc, 
 		cout << endl;
 		printShortHelp(parser);
 		cout << endl << getFlexbarURL();
-		cerr << "\nPlease specify reads input file.\n" << endl;
+		cerr << "\nPlease specify bam input file.\n" << endl;
 		exit(1);
 	}
 }
@@ -529,6 +590,7 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
 		if(isSet(parser, "output-log") && ! o.logStdout){
 			getOptionValue(o.outLogFile, parser, "output-log");
 			s = o.outLogFile;
+
 		}else{
                     o.outLogFile = s;
                 }
@@ -539,8 +601,9 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
 		*o.out << endl;
 	}
 
-	getOptionValue(o.readsFile, parser, "reads");
-	checkInputType(o.readsFile, o.format, true);
+
+// 	getOptionValue(o.readsFile, parser, "reads");
+// 	checkInputType(o.readsFile, o.format, true);
 }
 
 
@@ -598,11 +661,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	getOptionValue(o.readsFile, parser, "reads");
 	*out << "Reads file:            ";
 
-	if(o.readsFile == "-"){
-		*out << "stdin" << endl;
-		o.useStdin = true;
-	}
-	else *out << o.readsFile << endl;
+    *out << o.readsFile << endl;
 
 	o.runType = SINGLE;
 
@@ -643,6 +702,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	// barcode and adapter file options
 
+/*
 	if(isSet(parser, "barcodes")){
 
 		if(isSet(parser, "barcode-reads")){
@@ -679,7 +739,8 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 			if(o.barDetect == WITHIN_READ_REMOVAL) o.barDetect = WITHIN_READ_REMOVAL2;
 			else if(o.barDetect == WITHIN_READ)    o.barDetect = WITHIN_READ2;
 		}
-	}
+
+	}*/
 
 	if(isSet(parser, "adapters")){
 		getOptionValue(o.adapterFile, parser, "adapters");
@@ -921,7 +982,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	if(isSet(parser, "fasta-output")) o.switch2Fasta    = true;
 	if(isSet(parser, "length-dist"))  o.writeLengthDist = true;
 	if(isSet(parser, "number-tags"))  o.useNumberTag    = true;
-	if(isSet(parser, "removal-tags")) o.useRemovalTag   = true;
+ 	if(!isSet(parser, "removal-tags")) o.useRemovalTag   = true;
 	if(isSet(parser, "umi-tags"))     o.umiTags         = true;
 
 	*out << endl;
@@ -929,6 +990,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	// barcode options
 
+/*
 	if(o.barDetect != BOFF){
 
 		string b_trim_end;
@@ -986,7 +1048,8 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		*out << "barcode-gap:          ";
 		if(o.b_gapCost >= 0) *out << " ";
 		*out << o.b_gapCost << "\n" << endl;
-	}
+
+	}*/
 
 
 	// adapter options
@@ -1035,9 +1098,10 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 				*out << "adapter-tail-length:   " << o.a_tail_len << endl;
 			}
 
-			if(isSet(parser, "adapter-revcomp")){
 
-				string rcModeStr;
+			if(true){
+
+				string rcModeStr = "ON";
 				getOptionValue(rcModeStr, parser, "adapter-revcomp");
 				*out << "adapter-revcomp:       " << rcModeStr << endl;
 
