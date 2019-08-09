@@ -50,11 +50,25 @@ int main(int argc, const char* argv[]){
             removeCDNA(o,recordstable);
         }
         std::cout << "TargetName: " << o.targetName << "\n";
+        std::cout <<
 
 
 
-        //TODO removeCDNA
-        //tbb::concurrent_vector<flexbar::TBar> bars;
+
+
+        //TODO use output prefix // maybe target
+
+        std::string targetName = o.targetName;
+
+        o.targetName += "_P1";
+
+        std::string logFilename = targetName + ".log";
+        openOutputFile(o.fstrmOut, logFileName);
+        o.out = &o.fstrmOut;
+        //TODO //overwrite adapter parameters in options
+        //TODO use own parameters //overwrite adapter parameters in options
+
+
 
         //P1 alignment
 
@@ -64,36 +78,51 @@ int main(int argc, const char* argv[]){
 
         splitReads(o);
 
-        //TODO use own parameters //overwrite adapter parameters in options
-        //o.out = &o.fstrmOut;
-        startComputation(o);
+        /*
+    getOptionValue(o.adapterFile, parser, "adapters");
+    *out << "Adapter file:          " << o.adapterFile << endl;
+    o.adapRm = NORMAL;
+    o.useAdapterFile = true;*/
 
+
+
+        o.targetName = targetName + "_leftTail";
+        std::string logFilename = o.targetName + ".log";
+        openOutputFile(o.fstrmOut, logFileName);
+        o.out = &o.fstrmOut;
+
+
+
+        o.bundleSize = 20;
+        o.a_match = o.barcode_match;
+        o.a_mismatch = o.barcode_mismatch;
+        o.a_gapCost = o.barcode_gapCost;
+        o.a_errorRate = o.barcode_errorRate;
+        o.a_end = LTAIL;
+        rcMode    = RCOFF;
+
+//         openOutputFile(o.fstrmOut, logFileName);
         //o.out = &o.fstrmOut;
         //TODO //overwrite adapter parameters in options
         startComputation(o);
 
+        o.targetName = targetName + "_rightTail";
+        std::string logFilename = o.targetName + ".log";
+        openOutputFile(o.fstrmOut, logFileName);
+        o.out = &o.fstrmOut;
 
+        //comp
+        o.a_end = RTAIL;
+        o.rcMode = RCONLY;
+
+        startComputation(o);
     //o.readsFile     for extractReads
 //     o.readsFile = "";
 
 
-    getOptionValue(o.adapterFile, parser, "adapters");
-    *out << "Adapter file:          " << o.adapterFile << endl;
-    o.adapRm = NORMAL;
-    o.useAdapterFile = true;
 
 
-    o.bundleSize = 20;
-	o.a_match = o.barcode_match;
-    o.a_mismatch = o.barcode_mismatch;
-    o.a_gapCost = o.barcode_gapCost;
-	o.a_errorRate = o.barcode_errorRate;
-    o.a_end = LTAIL;
-    rcMode    = RCOFF;
 
-    //comp
-    o.a_end = RTAIL;
-    o.rcMode = RCONLY;
 
 	return 0;
 }
