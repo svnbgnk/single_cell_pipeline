@@ -15,7 +15,7 @@ private:
 	seqan::FlexbarReadsSeqFileIn seqFileIn;
 	const flexbar::QualTrimType m_qtrim;
 	const flexbar::FileFormat m_format;
-        std::vector<std::pair<CharString, Dna5String> > & m_fastaRecords;
+    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > & m_fastaRecords;
 
 	const bool m_preProcess, m_useStdin, m_qtrimPostRm, m_iupacInput;
 	const int m_maxUncalled, m_preTrimBegin, m_preTrimEnd, m_qtrimThresh, m_qtrimWinSize;
@@ -23,7 +23,7 @@ private:
 
 public:
 
-	SeqInput(const Options &o, const std::string filePath, const bool preProcess, const bool useStdin) :
+	SeqInput(const Options &o, const std::string filePath, std::vector<std::pair<seqan::CharString, seqan::Dna5String> > & fastaRecords, const bool preProcess, const bool useStdin) :
 
 		m_preProcess(preProcess),
 		m_useStdin(useStdin),
@@ -34,7 +34,7 @@ public:
 		m_qtrimThresh(o.qtrimThresh),
 		m_qtrimWinSize(o.qtrimWinSize),
 		m_qtrimPostRm(o.qtrimPostRm),
-		m_fastaRecords(o.m_fastaRecords),
+		m_fastaRecords(fastaRecords),
 		m_iupacInput(o.iupacInput),
 		m_format(o.format),
 		m_nrReads(0),
@@ -76,20 +76,19 @@ public:
 		using seqan::length;
 
 		try{
-                        if(m_fastaRecords.size() > 0)
-                        {
-                                reserve(ids,      m_fastaRecords.size());
-				reserve(seqs,     m_fastaRecords.size());
-				reserve(uncalled, 0);
+                if(m_fastaRecords.size() > 0)
+                {
+                    reserve(ids,      m_fastaRecords.size());
+                    reserve(seqs,     m_fastaRecords.size());
+                    reserve(uncalled, 0);
 
-                                for(int i = 0; i < m_fastaRecords.size(); ++i){
-                                    ids.push_back(std::move(m_fastaRecords[i].first));
-                                    seqs.push_back(std::move(m_fastaRecords[i].second));
-                                }
-                                m_fastaRecords.clear();
+                    for(int i = 0; i < m_fastaRecords.size(); ++i){
+                        appendValue(ids, std::move(m_fastaRecords[i].first));
+                        appendValue(seqs, std::move(m_fastaRecords[i].second));
+                    }
+                    m_fastaRecords.clear();
 
-
-                        }/*else if(! atEnd(seqFileIn)){
+                /*else if(! atEnd(seqFileIn)){
 
 				reserve(ids,      nReads);
 				reserve(seqs,     nReads);
@@ -122,7 +121,8 @@ public:
 				}
                         }*/
 
-				for(unsigned int i = 0; i < length(ids); ++i){
+				for(unsigned int i = 0; i < length(ids); ++i)
+                {
 
 					TString &id  =  ids[i];
 					TSeqStr &seq = seqs[i];

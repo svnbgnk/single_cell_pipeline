@@ -20,7 +20,7 @@ private:
 
 public:
 
-	PairedInput(const Options &o) :
+	PairedInput(Options &o) :
 
 		filter(serial_in_order),
 		m_format(o.format),
@@ -28,23 +28,23 @@ public:
 		m_interleaved(o.interleavedInput),
 		m_isPaired(o.isPaired),
 		m_useBarRead(o.barDetect == flexbar::BARCODE_READ),
-		m_internal_input(o.m_fastaRecords.size() > 0),
+		m_internal_input(o.fastaRecords.size() > 0),
 		m_bundleSize(o.bundleSize),
 		m_nBundles(o.nBundles),
 		m_tagCounter(0),
 		m_uncalled(0),
 		m_uncalledPairs(0){
 
-		m_f1 = new SeqInput<TSeqStr, TString>(o, o.readsFile, true, o.useStdin);
+		m_f1 = new SeqInput<TSeqStr, TString>(o, o.readsFile, o.fastaRecords, true, o.useStdin);
 
 		m_f2 = NULL;
 		m_b  = NULL;
 
 		if(m_isPaired && ! m_interleaved)
-		m_f2 = new SeqInput<TSeqStr, TString>(o, o.readsFile2, true, false);
+		m_f2 = new SeqInput<TSeqStr, TString>(o, o.readsFile2, o.fastaRecords, true, false);
 
 		if(m_useBarRead)
-		m_b = new SeqInput<TSeqStr, TString>(o, o.barReadsFile, false, false);
+		m_b = new SeqInput<TSeqStr, TString>(o, o.barReadsFile, o.fastaRecords, false, false);
 
 		if(m_nBundles > 0) ++m_nBundles;
 	}

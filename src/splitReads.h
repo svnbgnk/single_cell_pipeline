@@ -57,17 +57,27 @@ void splitReads(Options &o)
 
 */
 
-    //prepare flex result fasta
-    SeqFileIn seqFileInFlex(o.targetName);
+    //load Primer alignments from fasta
+
+    std::string fastaFile = o.targetName + ".fasta";
+    SeqFileIn seqFileInFlex(toCString(fastaFile));
 
 
-    CharString outputRevcomp = outputPath;
+//     CharString outputRevcomp = outputPath;
 
 //     outputPath += "_left_tail_trimmed.fasta";
 //     outputRevcomp += "_right_tail_trimmed.fasta";
 
-    SeqFileOut seqFileOut(toCString(outputPath));
-    SeqFileOut seqFileOutRevcomp(toCString(outputRevcomp));
+//     SeqFileOut seqFileOut(toCString(outputPath));
+//     SeqFileOut seqFileOutRevcomp(toCString(outputRevcomp));
+
+    int wrongSide = 0, forward = 0, reverseC = 0;
+//     int readLength = 0;
+
+    //TODO add as option
+    int readLength = 25;
+    bool checkOrigin = true;
+    bool verbose = false;
 
     while (!atEnd(seqFileInFlex))
     {
@@ -77,10 +87,6 @@ void splitReads(Options &o)
         {
 
             readRecord(id, read, seqFileInFlex);
-            if(readLength > 0 && length(read) > readLength){
-                read = prefix(read, readLength);
-            }
-
             Finder<CharString> finder(id);
             Pattern<CharString, Horspool> pattern("_Flexbar_removal_");
             find(finder, pattern);
@@ -112,6 +118,8 @@ void splitReads(Options &o)
                 }
                 //flexbar aligned to RC Primer
                 else if (doRC){
+                    if(readLength > 0 && length(read) > readLength)
+                        read = suffix(read, length(read) - readLength);
                     ++reverseC;
                     o.rightTail.push_back(make_pair(id, read));
 //                     writeRecord(seqFileOutRevcomp, id, read);
@@ -119,6 +127,9 @@ void splitReads(Options &o)
                 //flexbar aligned to forward direction of Primer
                 else
                 {
+                    if(readLength > 0 && length(read) > readLength)
+                        read = prefix(read, readLength);
+
                     ++forward;
                     o.leftTail.push_back(make_pair(id, read));
 //                     writeRecord(seqFileOut, id, read);
@@ -145,5 +156,5 @@ void splitReads(Options &o)
         std::cout << "Left: " << forward << "\n";
         std::cout << "Right: " << reverseC << "\n";
     }
-    return 0;
+//     return 0;
 }

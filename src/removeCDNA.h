@@ -152,7 +152,7 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
 
     SeqFileOut seqFileOut(toCString(outputPath));*/
 
-
+    //TODO add threshold as parameter
     int threshold = 5;
 
     //modify bam (Add UMI and Barcode (determined from flexbar) to each Alignment record)
@@ -279,7 +279,5 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
     }
 
 
-    std::cout << "Finished!\n";
-
-    return 0;
+    std::cout << "Finished removing cDNA!\n";
 }

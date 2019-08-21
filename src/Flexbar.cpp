@@ -22,10 +22,14 @@
 ===================================================*/
 
 #include "Flexbar.h"
-
+#include "extractReads.h"
+#include "removeCDNA.h"
+#include "splitReads.h"
+#include "FlexbarTypes.h"
 
 int main(int argc, const char* argv[]){
 
+    //TODO set Log file to leftTail in the beginning
 	using namespace std;
 	using namespace seqan;
 
@@ -38,84 +42,103 @@ int main(int argc, const char* argv[]){
 	parseCmdLine(parser, version, argc, argv);
 
 	Options o;
-
 	initOptions(o, parser);
-	loadOptions(o, parser);
+    loadOptions(o, parser);
 
         //TODO extract Reads
         //additionally make sure they are unique
         //TODO std::move??
         {
+            std::cout << "Extract Reads\n";
             std::vector<BamAlignmentRecord > recordstable = extractReads(o);
+//             std::cout << recordstable.size() << " finished\n";
+            std::cout << "Remove cDNA from Reads\n";
             removeCDNA(o,recordstable);
         }
-        std::cout << "TargetName: " << o.targetName << "\n";
-        std::cout <<
 
+//         for(int i = 0; i < 3; ++i){
+//             std::cout << o.fastaRecords[i].first << "\t" << o.fastaRecords[i].second << "\n";
+//         }
 
-
-
-
+//         o.fastaRecords.erase(o.fastaRecords.begin() + 15, o.fastaRecords.end());
         //TODO use output prefix // maybe target
+        o.fstrmOut.close();
 
         std::string targetName = o.targetName;
-
         o.targetName += "_P1";
-
-        std::string logFilename = targetName + ".log";
+        std::string logFileName = o.targetName + ".log";
         openOutputFile(o.fstrmOut, logFileName);
         o.out = &o.fstrmOut;
         //TODO //overwrite adapter parameters in options
         //TODO use own parameters //overwrite adapter parameters in options
 
-
-
         //P1 alignment
 
         //use adapter para
+        std::cout << "Primer Alignment\n";
 	startComputation(o);
 
+    std::cout << "Finished\n";
 
-        splitReads(o);
+    o.skipOutput = true;
 
-        /*
-    getOptionValue(o.adapterFile, parser, "adapters");
-    *out << "Adapter file:          " << o.adapterFile << endl;
-    o.adapRm = NORMAL;
-    o.useAdapterFile = true;*/
+    splitReads(o);
+/*
+        std::cout << "left: " << o.leftTail.size() << "\n\n";
+        for(int i = 0; i < 3; ++i){
+            std::cout << o.leftTail[i].first << "\t" << o.leftTail[i].second << "\n";
+        }
+
+        std::cout << "right: " << o.rightTail.size() << "\n\n";
+        for(int i = 0; i < 3; ++i){
+            std::cout << o.rightTail[i].first << "\t" << o.rightTail[i].second << "\n";
+        }*/
 
 
-
+        o.fstrmOut.close();
+//         exit(0);
         o.targetName = targetName + "_leftTail";
-        std::string logFilename = o.targetName + ".log";
-        openOutputFile(o.fstrmOut, logFileName);
+        logFileName = o.targetName + ".log";
+        appendOutputFile(o.fstrmOut, logFileName);
         o.out = &o.fstrmOut;
 
+        o.adapterSeq = "";
+        o.useAdapterFile = true;
+        o.adapterFile = o.whitelist;
+//         std::cout << "Adapter file: " << o.adapterFile << "\n";
+
+        o.fastaRecords = std::move(o.leftTail);
+
+        //TODO always check if it is empty
 
 
-        o.bundleSize = 20;
+        if(o.bundleSize == 256)
+            o.bundleSize = 20;
         o.a_match = o.barcode_match;
         o.a_mismatch = o.barcode_mismatch;
         o.a_gapCost = o.barcode_gapCost;
         o.a_errorRate = o.barcode_errorRate;
-        o.a_end = LTAIL;
-        rcMode    = RCOFF;
+        o.a_end = flexbar::TrimEnd::LTAIL;
+        o.rcMode    = flexbar::RevCompMode::RCOFF;
+        o.a_min_overlap = o.b_min_overlap;
 
-//         openOutputFile(o.fstrmOut, logFileName);
-        //o.out = &o.fstrmOut;
-        //TODO //overwrite adapter parameters in options
         startComputation(o);
 
+        std::cout << "Finished Left Tail Barcode Alignment: " << logFileName << "\n";
+
+        o.fastaRecords = std::move(o.rightTail);
         o.targetName = targetName + "_rightTail";
-        std::string logFilename = o.targetName + ".log";
+        logFileName = o.targetName + ".log";
         openOutputFile(o.fstrmOut, logFileName);
         o.out = &o.fstrmOut;
 
         //comp
-        o.a_end = RTAIL;
-        o.rcMode = RCONLY;
+        o.a_end = flexbar::TrimEnd::RTAIL;
+        o.rcMode = flexbar::RevCompMode::RCONLY;
 
         startComputation(o);
+        std::cout << "Finished Right Tail Barcode Alignment: " << logFileName << "\n";
+
     //o.readsFile     for extractReads
 //     o.readsFile = "";
 

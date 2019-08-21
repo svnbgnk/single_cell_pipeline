@@ -8,25 +8,27 @@
 #define FLEXBAR_OPTIONS_H
 
 #include <seqan/arg_parse.h>
-
+#include <seqan/sequence.h>
 #include "FlexbarIO.h"
 
 
 struct Options{
 
-	std::string readsFile, readsFile2, barReadsFile;
+//     using seqan::CharString;
+//     using seqan::Dna5String;
+	std::string readsFile, readsFile2, barReadsFile, bamFile, whitelist, regionsFile;
 
 	std::string outReadsFile, outReadsFile2, outLogFile;
 	std::string barcodeFile, adapterFile, barcode2File, adapter2File;
 	std::string adapterSeq, targetName, logAlignStr, outCompression;
 	std::string htrimLeft, htrimRight;
 
-        std::vector<std::pair<CharString, Dna5String> > fastaRecords;
+    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > fastaRecords;
 
-        std::vector<std::pair<CharString, Dna5String> > leftTail;
-        std::vector<std::pair<CharString, Dna5String> > rightTail;
+    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > leftTail;
+    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > rightTail;
 
-	bool isPaired, useAdapterFile, useNumberTag, useRemovalTag, umiTags, logStdout;
+	bool isPaired, useAdapterFile, useNumberTag, useRemovalTag, umiTags, logStdout, skipOutput;
 	bool switch2Fasta, writeUnassigned, writeSingleReads, writeSingleReadsP, writeLengthDist;
 	bool useStdin, useStdout, logEverything, relaxRegion, useRcTrimEnd, qtrimPostRm, addBarcodeAdapter;
 	bool interleavedInput, iupacInput, htrimAdapterRm, htrimMaxFirstOnly;
@@ -83,6 +85,7 @@ struct Options{
 
                 bamFile        = "";
                 whitelist      = "";
+                regionsFile    = "";
 
 
 		isPaired          = false;
@@ -95,6 +98,7 @@ struct Options{
 		writeLengthDist   = false;
 		switch2Fasta      = false;
 		logStdout         = false;
+        skipOutput        = false;
 		umiTags           = false;
 		interleavedInput  = false;
 		iupacInput        = false;
@@ -199,13 +203,23 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 	addSection(parser, "Basic options");
 	addOption(parser, ArgParseOption("n", "threads", "Number of threads to employ.", ARG::INTEGER));
-	addOption(parser, ArgParseOption("N", "bundle", "Number of (paired) reads per thread.", ARG::INTEGER));
+	addOption(parser, ArgParseOption("N", "bundle", "Number of (paired) reads per thread. Default 256 primer and 20 for barcode alignment. I all other cases they will be assined the same value.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("M", "bundles", "Process only certain number of bundles for testing.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("t", "target", "Prefix for output file names or paths.", ARG::OUTPUT_PREFIX));
 	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode.", ARG::INPUT_FILE));
+    addOption(parser, ArgParseOption("w", "whitelist", "Cell Barcodes which were determined to be valid by chromium pipeline.", ARG::INPUT_FILE));
+    addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file.", ARG::INPUT_FILE));
+    addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
+
 	addOption(parser, ArgParseOption("p", "reads2", "Second input file of paired reads, gz and bz2 files supported.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("i", "interleaved", "Interleaved format for first input set with paired reads."));
 	addOption(parser, ArgParseOption("I", "iupac", "Accept iupac symbols in reads and convert to N if not ATCG."));
+
+    setRequired(parser, "reads");
+    setRequired(parser, "whitelist");
+    setRequired(parser, "regionsFile");
+    setRequired(parser, "adapter-seq");
+    setRequired(parser, "target");
 
         setAdvanced(parser, "reads2");
         setAdvanced(parser, "interleaved");
@@ -217,14 +231,17 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("b2", "barcodes2", "Additional barcodes file for second read set in paired mode.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("br", "barcode-reads", "Fasta/q file containing separate barcode reads for detection.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("bo", "barcode-min-overlap", "Minimum overlap of barcode and read. Default: barcode length.", ARG::INTEGER));
-	addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
+// 	addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
 	addOption(parser, ArgParseOption("bt", "barcode-trim-end", "Type of detection, see section trim-end modes.", ARG::STRING));
 	addOption(parser, ArgParseOption("bn", "barcode-tail-length", "Region size in tail trim-end modes. Default: barcode length.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bk", "barcode-keep", "Keep barcodes within reads instead of removal."));
 	addOption(parser, ArgParseOption("bu", "barcode-unassigned", "Include unassigned reads in output generation."));
+
+
 	addOption(parser, ArgParseOption("bm", "barcode-match", "Alignment match score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bg", "barcode-gap", "Alignment gap score.", ARG::INTEGER));
+    addOption(parser, ArgParseOption("be", "barcode-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
 
 
     setAdvanced(parser, "barcodes2");
@@ -236,11 +253,11 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 
 	addSection(parser, "Adapter removal");
-	addOption(parser, ArgParseOption("a",  "adapters", "Fasta file with adapters for removal that may contain N.", ARG::INPUT_FILE));
+// 	addOption(parser, ArgParseOption("a",  "adapters", "Fasta file with Cell Barcodes to assign .", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("a2", "adapters2", "File with extra adapters for second read set in paired mode.", ARG::INPUT_FILE));
 //     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
 	addOption(parser, ArgParseOption("aa", "adapter-preset", "", ARG::STRING));
-	addOption(parser, ArgParseOption("ao", "adapter-min-overlap", "Minimum overlap for removal without pair overlap.", ARG::INTEGER));
+	addOption(parser, ArgParseOption("ao", "adapter-min-overlap", "Minimum overlap for removal for primer alignment without pair overlap.", ARG::INTEGER));
 // 	addOption(parser, ArgParseOption("ae", "adapter-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
 // 	addOption(parser, ArgParseOption("at", "adapter-trim-end", "Type of removal, see section trim-end modes.", ARG::STRING));
 	addOption(parser, ArgParseOption("an", "adapter-tail-length", "Region size for tail trim-end modes. Default: adapter length.", ARG::INTEGER));
@@ -268,7 +285,6 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     setAdvanced(parser, "adapter-cycles");
 
     addOption(parser, ArgParseOption("ae", "adapter-error-rate", "Error rate threshold for mismatches and gaps.", ARG::DOUBLE));
-    addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
     addOption(parser, ArgParseOption("at", "adapter-trim-end", "Type of removal, see section trim-end modes.", ARG::STRING));
 	addOption(parser, ArgParseOption("am", "adapter-match", "Alignment match score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("ai", "adapter-mismatch", "Alignment mismatch score.", ARG::INTEGER));
@@ -299,7 +315,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("qw", "qtrim-win-size", "Region size for sliding window approach.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("qa", "qtrim-post-removal", "Perform quality-based trimming after removal steps."));
 
-	addSection(parser, "Trimming of homopolymers");
+// 	addSection(parser, "Trimming of homopolymers");
 	addOption(parser, ArgParseOption("hl", "htrim-left", "Trim specific homopolymers on left read end after removal.", ARG::STRING));
 	addOption(parser, ArgParseOption("hr", "htrim-right", "Trim certain homopolymers on right read end after removal.", ARG::STRING));
 	addOption(parser, ArgParseOption("hi", "htrim-min-length", "Minimum length of homopolymers at read ends.", ARG::INTEGER));
@@ -308,6 +324,15 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("hf", "htrim-max-first", "Apply maximum length of homopolymers only for first one."));
 	addOption(parser, ArgParseOption("he", "htrim-error-rate", "Error rate threshold for mismatches.", ARG::DOUBLE));
 	addOption(parser, ArgParseOption("ha", "htrim-adapter", "Trim only in case of adapter removal on same side."));
+
+    setAdvanced(parser, "hl");
+    setAdvanced(parser, "hr");
+    setAdvanced(parser, "hi");
+    setAdvanced(parser, "h2");
+    setAdvanced(parser, "hx");
+    setAdvanced(parser, "hf");
+    setAdvanced(parser, "he");
+    setAdvanced(parser, "ha");
 
 	addSection(parser, "Output selection");
 	addOption(parser, ArgParseOption("f", "fasta-output", "Prefer non-quality format fasta for output."));
@@ -321,13 +346,14 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 	addSection(parser, "Logging and tagging");
 	addOption(parser, ArgParseOption("l", "align-log", "Print chosen read alignments.", ARG::STRING));
-	addOption(parser, ArgParseOption("alt", "alternative", "Print all valid alignments between query and read. Additonally mark best alignment with b and log difference between best and second best alignment if it exists"));
+ 	addOption(parser, ArgParseOption("bb", "best", "Print only the best valid alignments between query and read. This will break the pipleline in its current form."));
 	addOption(parser, ArgParseOption("o", "stdout-log", "Write statistics to stdout instead of target log file."));
 	addOption(parser, ArgParseOption("O", "output-log", "Output file for logging instead of target prefix usage.", ARG::OUTPUT_FILE));
 	addOption(parser, ArgParseOption("g", "removal-tags", "Do not tag reads that are subject to adapter or barcode removal."));
 
     setAdvanced(parser, "stdout-log");
     setAdvanced(parser, "removal-tags");
+    setAdvanced(parser, "best");
 
 	addOption(parser, ArgParseOption("e", "number-tags", "Replace read tags by ascending number to save space."));
 	addOption(parser, ArgParseOption("d", "umi-tags", "Capture UMIs in reads at barcode or adapter N positions."));
@@ -348,7 +374,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 	setAdvanced(parser, "barcode-gap");*/
 
-	setAdvanced(parser, "adapter-seq");
+// 	setAdvanced(parser, "adapter-seq");
 	setAdvanced(parser, "adapter-tail-length");
 	setAdvanced(parser, "adapter-relaxed");
 	setAdvanced(parser, "adapter-min-poverlap");
@@ -389,7 +415,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 
 	setCategory(parser, "Barcode and adapter removal");
-	// setRequired(parser, "reads");
+
 	// setMinValue(parser, "threads", "1");
 
 	// setValidValues(parser, "target", "fasta fa fastq fq");
@@ -441,6 +467,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setDefaultValue(parser, "max-uncalled",         "0");
 	setDefaultValue(parser, "min-read-length",      "18");
 
+    setDefaultValue(parser, "align-log",     "ALL");
+
 /*
     addOption(parser, ArgParseOption("bm", "barcode-match", "Alignment match score.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("bi", "barcode-mismatch", "Alignment mismatch score.", ARG::INTEGER));
@@ -448,22 +476,22 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 
 	setDefaultValue(parser, "barcode-trim-end",   "LTAIL");
-	setDefaultValue(parser, "barcode-error-rate", "0.0");
+	setDefaultValue(parser, "barcode-error-rate", "0.24");
 	setDefaultValue(parser, "barcode-match",      "1");
 	setDefaultValue(parser, "barcode-mismatch",   "-1");
-	setDefaultValue(parser, "barcode-gap",        "-9");
-
+	setDefaultValue(parser, "barcode-gap",        "-1");
+    setDefaultValue(parser, "barcode-min-overlap", "10");
 
 	setDefaultValue(parser, "adapter-trim-end",     "ANY");
 
-	setDefaultValue(parser, "adapter-min-overlap",  "3");
-	setDefaultValue(parser, "adapter-error-rate",   "0.1");
+	setDefaultValue(parser, "adapter-min-overlap",  "20");
+	setDefaultValue(parser, "adapter-error-rate",   "0.15");
 	setDefaultValue(parser, "adapter-min-poverlap", "40");
 	setDefaultValue(parser, "adapter-cycles",       "1");
 	setDefaultValue(parser, "adapter-match",        "1");
 	setDefaultValue(parser, "adapter-mismatch",     "-1");
 	setDefaultValue(parser, "adapter-gap",          "-1");
-    setDefaultValue(parser, "adapter-revcomp",      "ON);
+    setDefaultValue(parser, "adapter-revcomp",      "ON");
 
 	// setDefaultValue(parser, "adapter-overhang",     "0");
 
@@ -585,7 +613,7 @@ void initOptions(Options &o, seqan::ArgumentParser &parser){
 		string s;
 		getOptionValue(s, parser, "target");
 
-		s = s + ".log";
+		s = s + "_leftTail.log";
 
 		if(isSet(parser, "output-log") && ! o.logStdout){
 			getOptionValue(o.outLogFile, parser, "output-log");
@@ -650,18 +678,23 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	else *out << endl;
 
 	getOptionValue(o.targetName, parser, "target");
-	*out << "Target name:           " << o.targetName << endl;
+	*out << "Target name:            " << o.targetName << endl;
 
-	*out << "File type:             ";
+	*out << "File type:              ";
 	     if(o.format == FASTA)   *out << "fasta";
 	else if(o.format == FASTQ)   *out << "fastq";
 	*out << endl;
 
 
 	getOptionValue(o.readsFile, parser, "reads");
-	*out << "Reads file:            ";
-
+	*out << "Reads file:             ";
     *out << o.readsFile << endl;
+
+	getOptionValue(o.regionsFile, parser, "regionsFile");
+	*out << "regions File:           ";
+    *out << o.regionsFile << endl;
+
+    *out << "Cellbarcode whitelist: " << o.whitelist << endl;
 
 	o.runType = SINGLE;
 
@@ -742,13 +775,15 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	}*/
 
-	if(isSet(parser, "adapters")){
-		getOptionValue(o.adapterFile, parser, "adapters");
-		*out << "Adapter file:          " << o.adapterFile << endl;
-		o.adapRm = NORMAL;
-		o.useAdapterFile = true;
+
+	if(isSet(parser, "whitelist")){
+		getOptionValue(o.whitelist, parser, "whitelist");
+// 		*out << "Adapter file:          " << o.adapterFile << endl;
+// 		o.adapRm = NORMAL;
+// 		o.useAdapterFile = true;
 	}
-	else if(isSet(parser, "adapter-seq")){
+
+	if(isSet(parser, "adapter-seq")){
 		getOptionValue(o.adapterSeq, parser, "adapter-seq");
 		o.adapRm = NORMAL;
 	}
@@ -935,7 +970,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		else if(o.logAlignStr == "MOD") o.logAlign = MOD;
 	}
 
-	if(isSet(parser, "alternative")) o.logEverything = true;
+ 	if(isSet(parser, "best")) o.logEverything = false;
 
 
 	if(isSet(parser, "zip-output")){
@@ -1024,6 +1059,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		}
 
 		getOptionValue(o.b_errorRate, parser, "barcode-error-rate");
+
 		*out << "barcode-error-rate:    " << o.b_errorRate << endl;
 
 		if(o.b_errorRate < 0 || o.b_errorRate >= 1){
@@ -1070,6 +1106,8 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		else *out << "adapter-pair-overlap:  " << pOverlap << endl;
 	}
 
+
+    *out << "Primer removal is done with the following parameters:\n";
 	if(o.adapRm != AOFF || o.poMode == PONLY){
 
 		if(o.adapRm != AOFF){
@@ -1209,6 +1247,13 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		getOptionValue(o.a_mismatch, parser, "adapter-mismatch");
 		getOptionValue(o.a_gapCost,  parser, "adapter-gap");
 
+
+		getOptionValue(o.barcode_match,    parser, "barcode-match");
+		getOptionValue(o.barcode_mismatch, parser, "barcode-mismatch");
+		getOptionValue(o.barcode_gapCost,  parser, "barcode-gap");
+        getOptionValue(o.barcode_errorRate, parser,"barcode-error-rate");
+        getOptionValue(o.b_min_overlap, parser, "barcode-min-overlap");
+
 		*out << "adapter-match:        ";
 		if(o.a_match >= 0) *out << " ";
 		*out << o.a_match << endl;
@@ -1220,6 +1265,23 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		*out << "adapter-gap:          ";
 		if(o.a_gapCost >= 0) *out << " ";
 		*out << o.a_gapCost << "\n" << endl;
+
+        *out << "Cellbarcode alignment is done with: \n";
+
+        *out << "barcode-min-overlap:    " << o.b_min_overlap << endl;
+
+        *out << "barcode-error-rate:    " << o.barcode_errorRate << endl;
+        *out << "barcode-match:        ";
+		if(o.a_match >= 0) *out << " ";
+		*out << o.barcode_match << endl;
+
+		*out << "barcode-mismatch:     ";
+		if(o.a_mismatch >= 0) *out << " ";
+		*out << o.barcode_mismatch << endl;
+
+		*out << "barcode-gap:          ";
+		if(o.a_gapCost >= 0) *out << " ";
+		*out << o.barcode_gapCost << "\n" << endl;
 	}
 
 }

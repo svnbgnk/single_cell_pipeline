@@ -62,6 +62,7 @@ public:
 		using seqan::suffix;
 
 		TSeqRead &seqRead = *sr;
+
 		int readLength    = length(seqRead.seq);
 
 		if(! m_isBarcoding && readLength < m_minLength){
@@ -181,7 +182,8 @@ public:
 		}
 
 		// If we are only interested in the best alignment put them in the vector after checking all queries
-		if(!m_logEverything){
+		//TODO add this to other version
+		if(!m_logEverything && qIndex != -1){
 			am_v.push_back(am);
 			qIndex_v.push_back(qIndex);
 		}
@@ -192,7 +194,7 @@ public:
 //			am_v.push_back(am_v[pos_bestScore]);
 //			am_v.erase(am_v.begin() + pos_bestScore);
 			std::iter_swap(qIndex_v.begin() + pos_bestScore, qIndex_v.begin() + (qIndex_v.size() - 1)); // + (qIndex_v.size() - 1)
-			std::iter_swap(am_v.begin() + pos_bestScore, am_v.begin() + (am_v.size() - 1)); 
+			std::iter_swap(am_v.begin() + pos_bestScore, am_v.begin() + (am_v.size() - 1));
 		}
 
 		int smallest_diff = -1;
@@ -201,11 +203,12 @@ public:
 		if(scores.size() > 1)
 			smallest_diff = amScore_bestScore - scores[1];
 		}
+
 		if(am_v.size() > 0){
-		if(amScore_bestScore != am_v.back().score){
-			std::cout << "Ohno\n";
-			exit(0);
-		}
+            if(amScore_bestScore != am_v.back().score){
+                std::cout << "Ohno\n";
+                exit(0);
+            }
 		}
 
 		string smallest_diff_to_best_score;
@@ -394,8 +397,8 @@ public:
 			  << "read id   " << seqRead.id  << "\n"
 			  << "read seq  " << seqRead.seq << "\n\n" << endl;
 		}
-		*m_out << s.str();
 
+		*m_out << s.str();
 		return ++qIndex;
 	}
 
