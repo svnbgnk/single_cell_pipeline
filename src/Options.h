@@ -308,12 +308,18 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addOption(parser, ArgParseOption("k", "post-trim-length", "Trim to specified read length from 3' end after removal.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("m", "min-read-length", "Minimum read length to remain after removal.", ARG::INTEGER));
 
-	addSection(parser, "Quality-based trimming");
+// 	addSection(parser, "Quality-based trimming");
 	addOption(parser, ArgParseOption("q",  "qtrim", "Quality-based trimming mode.", ARG::STRING));
 	addOption(parser, ArgParseOption("qf", "qtrim-format", "Quality format.", ARG::STRING));
 	addOption(parser, ArgParseOption("qt", "qtrim-threshold", "Minimum quality as threshold for trimming.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("qw", "qtrim-win-size", "Region size for sliding window approach.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("qa", "qtrim-post-removal", "Perform quality-based trimming after removal steps."));
+
+    setAdvanced(parser, "q");
+    setAdvanced(parser, "qf");
+    setAdvanced(parser, "qt");
+    setAdvanced(parser, "qw");
+    setAdvanced(parser, "qa");
 
 // 	addSection(parser, "Trimming of homopolymers");
 	addOption(parser, ArgParseOption("hl", "htrim-left", "Trim specific homopolymers on left read end after removal.", ARG::STRING));
@@ -463,11 +469,12 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	setDefaultValue(parser, "target",  "flexbarOut");
 	setDefaultValue(parser, "threads", "1");
 	setDefaultValue(parser, "bundle",  "256");
+    setDefaultValue(parser, "align-log",     "ALL");
+
 
 	setDefaultValue(parser, "max-uncalled",         "0");
 	setDefaultValue(parser, "min-read-length",      "18");
 
-    setDefaultValue(parser, "align-log",     "ALL");
 
 /*
     addOption(parser, ArgParseOption("bm", "barcode-match", "Alignment match score.", ARG::INTEGER));
@@ -500,20 +507,18 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 	setDefaultValue(parser, "htrim-min-length", "3");
 	setDefaultValue(parser, "htrim-error-rate", "0.1");
-
+/*
 	addTextSection(parser, "TRIM-END MODES");
 	addText(parser._toolDoc, "\\fBANY:\\fP   longer side of read remains after removal of overlap", false);
 	addText(parser._toolDoc, "\\fBLEFT:\\fP  right side remains after removal, align <= read end",  false);
 	addText(parser._toolDoc, "\\fBRIGHT:\\fP left part remains after removal, align >= read start", false);
 	addText(parser._toolDoc, "\\fBLTAIL:\\fP consider first n bases of reads in alignment",         false);
-	addText(parser._toolDoc, "\\fBRTAIL:\\fP use only last n bases, see tail-length options",       false);
+	addText(parser._toolDoc, "\\fBRTAIL:\\fP use only last n bases, see tail-length options",       false);*/
 
 	addTextSection(parser, "EXAMPLES");
-	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.fq \\fB-t\\fP target \\fB-q\\fP TAIL \\fB-qf\\fP i1.8", false);
-	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.fq \\fB-b\\fP barcodes.fa \\fB-bt\\fP LTAIL", false);
-	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.fq \\fB-a\\fP adapters.fa \\fB-ao\\fP 3 \\fB-ae\\fP 0.1", false);
-	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP r1.fq \\fB-p\\fP r2.fq \\fB-a\\fP a1.fa \\fB-a2\\fP a2.fa \\fB-ap\\fP ON", false);
-	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP r1.fq \\fB-p\\fP r2.fq \\fB-aa\\fP TruSeq \\fB-ap\\fP ON");
+	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-t\\fP target\\fB-w\\fP whitelist.fasta\\fb-rf\\fp coding_proteins", false);
+// 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-b\\fP barcodes.fa \\fB", false);
+// 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-a\\fP adapters.fa \\fB-ao\\fP 3 \\fB-ae\\fP 0.1", false);
 }
 
 
@@ -962,13 +967,13 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 
 	// output, logging and tagging options
 
-	if(isSet(parser, "align-log")){
+// 	if(isSet(parser, "align-log")){
 		getOptionValue(o.logAlignStr, parser, "align-log");
 
 		     if(o.logAlignStr == "ALL") o.logAlign = ALL;
 		else if(o.logAlignStr == "TAB") o.logAlign = TAB;
 		else if(o.logAlignStr == "MOD") o.logAlign = MOD;
-	}
+// 	}
 
  	if(isSet(parser, "best")) o.logEverything = false;
 
