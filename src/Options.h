@@ -174,7 +174,8 @@ const std::string getFlexbarURL(){
 
 
 const std::string getFlexbarDescription(){
-	return "The program Flexbar preprocesses high-throughput sequencing data efficiently. It demultiplexes barcoded runs and removes adapter sequences. Several adapter removal presets for Illumina libraries are included. Flexbar computes exact overlap alignments using SIMD and multicore parallelism. Moreover, trimming and filtering features are provided, e.g. trimming of homopolymers at read ends. Flexbar increases read mapping rates and improves genome as well as transcriptome assemblies. Unique molecular identifiers can be extracted in a flexible way. The software supports data in fasta and fastq format from multiple sequencing platforms. Refer to the manual on github.com/seqan/flexbar/wiki or contact Johannes Roehr on github.com/jtroehr for support with this application.";
+	return "This modified version of the program Flexbar assigns barodes to nano nanopore sequencing data by using the efficient exact overlap alignments using SIMD and multicore parallelism provided by flexbar. It removes the provided adapter sequence and assign barcodes provided in a separate fasta, which could be determine by the chromium pipeline."/*
+	"It demultiplexes barcoded runs and removes adapter sequences. Several adapter removal presets for Illumina libraries are included. Flexbar computes exact overlap alignments using SIMD and multicore parallelism. Moreover, trimming and filtering features are provided, e.g. trimming of homopolymers at read ends. Flexbar increases read mapping rates and improves genome as well as transcriptome assemblies. Unique molecular identifiers can be extracted in a flexible way. The software supports data in fasta and fastq format from multiple sequencing platforms. Refer to the manual on github.com/seqan/flexbar/wiki or contact Johannes Roehr on github.com/jtroehr for support with this application."*/;
 }
 
 
@@ -193,9 +194,9 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	// setLongCopyright(parser, "");
 
 	addDescription(parser, getFlexbarDescription());
-	setShortDescription(parser, "flexible barcode and adapter removal");
+	setShortDescription(parser, "Nanopore read assigment");
 
-	addUsageLine(parser, "\\fB-r\\fP reads [\\fB-b\\fP barcodes] [\\fB-a\\fP adapters] [options]");
+// 	addUsageLine(parser, "\\fB-r\\fP reads [\\fB-b\\fP barcodes] [\\fB-a\\fP adapters] [options]");
 
 	addOption(parser, ArgParseOption("hm", "man-help", "Print advanced options as man document."));
 	addOption(parser, ArgParseOption("v", "versions", "Print Flexbar and SeqAn version numbers."));
@@ -515,8 +516,8 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	addText(parser._toolDoc, "\\fBLTAIL:\\fP consider first n bases of reads in alignment",         false);
 	addText(parser._toolDoc, "\\fBRTAIL:\\fP use only last n bases, see tail-length options",       false);*/
 
-	addTextSection(parser, "EXAMPLES");
-	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-t\\fP target\\fB-w\\fP whitelist.fasta\\fb-rf\\fp coding_proteins", false);
+ 	addTextSection(parser, "EXAMPLES");
+ 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-t\\fP target \\fB-w\\fP whitelist.fasta \\fB-rf\\fP coding_proteins", false);
 // 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-b\\fP barcodes.fa \\fB", false);
 // 	addText(parser._toolDoc, "\\fBflexbar\\fP \\fB-r\\fP reads.bam \\fB-a\\fP adapters.fa \\fB-ao\\fP 3 \\fB-ae\\fP 0.1", false);
 }
@@ -563,7 +564,7 @@ void parseCmdLine(seqan::ArgumentParser &parser, std::string version, int argc, 
 			cout << endl << getFlexbarURL() << endl;
 
 			if(isSet(parser, "help")){
-				cout << "Show advanced options: flexbar -hh\n" << endl;
+				cout << "Show advanced options (many of the advance parameters will break the pipeline and nearly of them have currently no purpose): singleCellPipe -hh\n" << endl;
 			}
 		}
 		else cout << endl;

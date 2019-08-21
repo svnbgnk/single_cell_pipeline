@@ -36,7 +36,7 @@ int main(int argc, const char* argv[]){
 	const string version = "3.5.0";
 	const string date    = "May 2019";
 
-	ArgumentParser parser("flexbar");
+	ArgumentParser parser("singleCellPipe");
 
 	defineOptions(parser, version, date);
 	parseCmdLine(parser, version, argc, argv);
