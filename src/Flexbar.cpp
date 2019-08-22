@@ -76,7 +76,9 @@ int main(int argc, const char* argv[]){
 
         //use adapter para
         std::cout << "Primer Alignment\n";
-	startComputation(o);
+        {
+            startComputation(o);
+        }
 
     std::cout << "Finished\n";
 
@@ -112,8 +114,8 @@ int main(int argc, const char* argv[]){
         //TODO always check if it is empty
 
 
-        if(o.bundleSize == 256)
-            o.bundleSize = 20;
+//         if(o.bundleSize == 256)
+//             o.bundleSize = 20;
         o.a_match = o.barcode_match;
         o.a_mismatch = o.barcode_mismatch;
         o.a_gapCost = o.barcode_gapCost;
@@ -122,8 +124,9 @@ int main(int argc, const char* argv[]){
         o.rcMode    = flexbar::RevCompMode::RCOFF;
         o.a_min_overlap = o.b_min_overlap;
 
-        startComputation(o);
-
+        {
+            startComputation(o);
+        }
         std::cout << "Finished Left Tail Barcode Alignment: " << logFileName << "\n";
 
         o.fastaRecords = std::move(o.rightTail);
@@ -136,7 +139,9 @@ int main(int argc, const char* argv[]){
         o.a_end = flexbar::TrimEnd::RTAIL;
         o.rcMode = flexbar::RevCompMode::RCONLY;
 
-        startComputation(o);
+        {
+            startComputation(o);
+        }
         std::cout << "Finished Right Tail Barcode Alignment: " << logFileName << "\n";
 
     //o.readsFile     for extractReads

@@ -82,11 +82,12 @@ public:
                     reserve(seqs,     m_fastaRecords.size());
                     reserve(uncalled, 0);
 
-                    for(int i = 0; i < m_fastaRecords.size(); ++i){
+                    int nBundle = (m_fastaRecords.size() > nReads) ? nReads : m_fastaRecords.size();
+                    for(int i = 0; i < nBundle; ++i){
                         appendValue(ids, std::move(m_fastaRecords[i].first));
                         appendValue(seqs, std::move(m_fastaRecords[i].second));
                     }
-                    m_fastaRecords.clear();
+                    m_fastaRecords.erase(m_fastaRecords.begin(), m_fastaRecords.begin() + nBundle);
 
                 /*else if(! atEnd(seqFileIn)){
 

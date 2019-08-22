@@ -25,9 +25,10 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     int threshold = -1;
     int step = 1;
     int overlap = 0;
-    bool verbose = false;
+    bool verbose = true;
     bool overlapping = false;
     bool rmDup = true;
+    int threads = o.nThreads;
 
 
     //Read gtf file
@@ -184,7 +185,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
                     continue;
                 }
                 //TODO assume sorted
-                #pragma omp parallel for num_threads(o.nThreads) schedule(static)
+                #pragma omp parallel for num_threads(threads) schedule(static)
                 for(int i = st; i < end; ++i){
                     //check row
                     string rowContig = toCString(std::get<0>(table[i]));
