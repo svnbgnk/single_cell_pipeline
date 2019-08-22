@@ -62,7 +62,7 @@ public:
 				exit(1);
 			}
 		}
-		else /*if (!m_skip_output)*/{
+		else if (!m_skip_output){
 			if(! open(seqFileOut, m_filePath.c_str())){
 				cerr << "\nERROR: Could not open file " << m_filePath << "\n" << endl;
 				exit(1);
@@ -172,8 +172,9 @@ public:
 			else if(m_writeLenDist)
 				cerr << "\nCompile Flexbar with larger max read length to get correct length dist.\n" << endl;
 
-            //         if(m_skip_output)
-//             return NULL;
+            if(m_skip_output)
+                return NULL;
+
 			writeSeqRead(*seqRead);
 		}
 
