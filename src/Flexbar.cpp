@@ -77,7 +77,10 @@ int main(int argc, const char* argv[]){
         //use adapter para
         std::cout << "Primer Alignment\n";
         {
+            int tmpbundleSize = o.bundleSize;
+            o.bundleSize = 256;
             startComputation(o);
+            o.bundleSize = tmpbundleSize;
         }
 
     std::cout << "Finished\n";
@@ -115,7 +118,7 @@ int main(int argc, const char* argv[]){
 
 
 //         if(o.bundleSize == 256)
-//             o.bundleSize = 20;
+        o.bundleSize = 4;
         o.a_match = o.barcode_match;
         o.a_mismatch = o.barcode_mismatch;
         o.a_gapCost = o.barcode_gapCost;

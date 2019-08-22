@@ -205,7 +205,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 	addSection(parser, "Basic options");
 	addOption(parser, ArgParseOption("n", "threads", "Number of threads to employ.", ARG::INTEGER));
-	addOption(parser, ArgParseOption("N", "bundle", "Number of (paired) reads per thread. Default 256 primer and 20 for barcode alignment. I all other cases they will be assined the same value.", ARG::INTEGER));
+	addOption(parser, ArgParseOption("N", "bundle", "Number of (paired) reads per thread. Always use 256 primer alignment. Use N * whitelist Barcodes <= 6000.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("M", "bundles", "Process only certain number of bundles for testing.", ARG::INTEGER));
 	addOption(parser, ArgParseOption("t", "target", "Prefix for output file names or paths.", ARG::OUTPUT_PREFIX));
 	addOption(parser, ArgParseOption("r", "reads", "Bam file with nanopore reads that contain a primer and barcode.", ARG::INPUT_FILE));
@@ -470,7 +470,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	// setDefaultValue(parser, "version-check", "OFF");
 	setDefaultValue(parser, "target",  "flexbarOut");
 	setDefaultValue(parser, "threads", "1");
-	setDefaultValue(parser, "bundle",  "256");
+	setDefaultValue(parser, "bundle",  "2");
     setDefaultValue(parser, "align-log",     "ALL");
 
 
