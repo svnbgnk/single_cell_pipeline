@@ -15,6 +15,7 @@ private:
 	const bool m_isPaired, m_useBarRead, m_internal_input, m_useNumberTag, m_interleaved;
 	const unsigned int m_bundleSize;
 
+    uint32_t & readingPos;
 	tbb::atomic<unsigned long> m_uncalled, m_uncalledPairs, m_tagCounter, m_nBundles;
 	SeqInput<TSeqStr, TString> *m_f1, *m_f2, *m_b;
 
@@ -29,6 +30,7 @@ public:
 		m_isPaired(o.isPaired),
 		m_useBarRead(o.barDetect == flexbar::BARCODE_READ),
 		m_internal_input(o.fastaRecords.size() > 0),
+		readingPos(o.readingPos),
 		m_bundleSize(o.bundleSize),
 		m_nBundles(o.nBundles),
 		m_tagCounter(0),
@@ -73,7 +75,7 @@ public:
 		unsigned int bundleSize      = m_bundleSize;
 		if(m_interleaved) bundleSize = m_bundleSize * 2;
 
-		unsigned int nReads = m_f1->loadSeqReads(uncalled, ids, seqs, quals, bundleSize);
+		unsigned int nReads = m_f1->loadSeqReads(uncalled, ids, seqs, quals, bundleSize, readingPos);
 
 		if(m_interleaved && nReads % 2 == 1){
 			cerr << "\nERROR: Interleaved reads input does not contain even number of reads.\n" << endl;
@@ -81,7 +83,7 @@ public:
 		}
 
 		if(m_isPaired && ! m_interleaved){
-			unsigned int nReads2 = m_f2->loadSeqReads(uncalled2, ids2, seqs2, quals2, m_bundleSize);
+			unsigned int nReads2 = m_f2->loadSeqReads(uncalled2, ids2, seqs2, quals2, m_bundleSize, readingPos);
 
 			if(nReads != nReads2){
 				cerr << "\nERROR: Read without counterpart in paired input mode.\n" << endl;
@@ -90,7 +92,7 @@ public:
 		}
 
 		if(m_useBarRead){
-			unsigned int nBarReads = m_b->loadSeqReads(uncalledBR, idsBR, seqsBR, qualsBR, m_bundleSize);
+			unsigned int nBarReads = m_b->loadSeqReads(uncalledBR, idsBR, seqsBR, qualsBR, m_bundleSize, readingPos);
 
 			unsigned int multi      = 1;
 			if(m_interleaved) multi = 2;

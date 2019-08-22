@@ -33,6 +33,7 @@ struct Options{
 	bool useStdin, useStdout, logEverything, relaxRegion, useRcTrimEnd, qtrimPostRm, addBarcodeAdapter;
 	bool interleavedInput, iupacInput, htrimAdapterRm, htrimMaxFirstOnly;
 
+    uint32_t readingPos = 0;
 	int cutLen_begin, cutLen_end, cutLen_read, a_tail_len, b_tail_len, p_min_overlap;
 	int qtrimThresh, qtrimWinSize, a_overhang, htrimMinLength, htrimMinLength2, htrimMaxLength;
 	int maxUncalled, min_readLen, a_min_overlap, b_min_overlap, nThreads, bundleSize, nBundles;

@@ -227,6 +227,7 @@ void startProcessing(Options &o){
 	using namespace std;
 	using namespace flexbar;
 
+    o.readingPos = 0;
 	time_t start;
 	time(&start);
 

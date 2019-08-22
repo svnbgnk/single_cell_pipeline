@@ -6,6 +6,7 @@
 #include <seqan/seq_io.h>
 #include "QualTrimming.h"
 
+tbb::mutex inputMutex;
 
 template <typename TSeqStr, typename TString>
 class SeqInput {
@@ -66,7 +67,7 @@ public:
 
 
 	// returns number of read SeqReads
-	unsigned int loadSeqReads(seqan::StringSet<bool> &uncalled, flexbar::TStrings &ids, flexbar::TSeqStrs &seqs, flexbar::TStrings &quals, const unsigned int nReads){
+	unsigned int loadSeqReads(seqan::StringSet<bool> &uncalled, flexbar::TStrings &ids, flexbar::TSeqStrs &seqs, flexbar::TStrings &quals, const unsigned int nReads, uint32_t & readingPos){
 
 		using namespace std;
 		using namespace flexbar;
@@ -76,18 +77,21 @@ public:
 		using seqan::length;
 
 		try{
-                if(m_fastaRecords.size() > 0)
+                if(readingPos < m_fastaRecords.size()/*m_fastaRecords.size() > 0*/)
                 {
                     reserve(ids,      m_fastaRecords.size());
                     reserve(seqs,     m_fastaRecords.size());
                     reserve(uncalled, 0);
 
-                    int nBundle = (m_fastaRecords.size() > nReads) ? nReads : m_fastaRecords.size();
-                    for(int i = 0; i < nBundle; ++i){
+                    inputMutex.lock();
+                    int readingPosEnd = (m_fastaRecords.size() > nReads + readingPos) ? (nReads + readingPos) : m_fastaRecords.size();
+                    for(int i = readingPos; i < readingPosEnd; ++i){
                         appendValue(ids, std::move(m_fastaRecords[i].first));
                         appendValue(seqs, std::move(m_fastaRecords[i].second));
                     }
-                    m_fastaRecords.erase(m_fastaRecords.begin(), m_fastaRecords.begin() + nBundle);
+                    readingPos += nReads;
+                    inputMutex.unlock();
+//                     m_fastaRecords.erase(m_fastaRecords.begin(), m_fastaRecords.begin() + nBundle);
 
                 /*else if(! atEnd(seqFileIn)){
 
