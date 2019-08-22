@@ -119,6 +119,7 @@ int main(int argc, const char* argv[]){
 
 //         if(o.bundleSize == 256)
         o.bundleSize = 4;
+        o.logEverything = true;
         o.a_match = o.barcode_match;
         o.a_mismatch = o.barcode_mismatch;
         o.a_gapCost = o.barcode_gapCost;

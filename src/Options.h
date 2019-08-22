@@ -354,14 +354,14 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 
 	addSection(parser, "Logging and tagging");
 	addOption(parser, ArgParseOption("l", "align-log", "Print chosen read alignments.", ARG::STRING));
- 	addOption(parser, ArgParseOption("bb", "best", "Print only the best valid alignments between query and read. This will break the pipleline in its current form."));
+ 	addOption(parser, ArgParseOption("alt", "alternative", "Print all valid alignments between query and read. This will break the pipleline in its current form."));
 	addOption(parser, ArgParseOption("o", "stdout-log", "Write statistics to stdout instead of target log file."));
 	addOption(parser, ArgParseOption("O", "output-log", "Output file for logging instead of target prefix usage.", ARG::OUTPUT_FILE));
 	addOption(parser, ArgParseOption("g", "removal-tags", "Do not tag reads that are subject to adapter or barcode removal."));
 
     setAdvanced(parser, "stdout-log");
     setAdvanced(parser, "removal-tags");
-    setAdvanced(parser, "best");
+//     setAdvanced(parser, "alternative");
 
 	addOption(parser, ArgParseOption("e", "number-tags", "Replace read tags by ascending number to save space."));
 	addOption(parser, ArgParseOption("d", "umi-tags", "Capture UMIs in reads at barcode or adapter N positions."));
@@ -977,7 +977,7 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		else if(o.logAlignStr == "MOD") o.logAlign = MOD;
 // 	}
 
- 	if(isSet(parser, "best")) o.logEverything = false;
+ 	if(isSet(parser, "alternative")) o.logEverything = true;
 
 
 	if(isSet(parser, "zip-output")){
