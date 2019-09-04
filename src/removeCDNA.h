@@ -208,6 +208,7 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
                 if(verbose)
                     std::cout << "Take whole read since it was not aligned\n";
                 o.fastaRecords.push_back(make_pair(id, record.qName));
+//                 std::make_tuple(10, "Test", 3.14, std::ref(n), n);
                 continue;
             }
 

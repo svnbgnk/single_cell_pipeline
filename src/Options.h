@@ -23,11 +23,13 @@ struct Options{
 	std::string adapterSeq, targetName, logAlignStr, outCompression;
 	std::string htrimLeft, htrimRight;
 
+//     std::tuple<int, int>
     std::vector<std::pair<seqan::CharString, seqan::Dna5String> > fastaRecords;
 
     std::vector<std::pair<seqan::CharString, seqan::Dna5String> > leftTail;
     std::vector<std::pair<seqan::CharString, seqan::Dna5String> > rightTail;
 
+    bool rmMulti;
 	bool isPaired, useAdapterFile, useNumberTag, useRemovalTag, umiTags, logStdout, skipOutput;
 	bool switch2Fasta, writeUnassigned, writeSingleReads, writeSingleReadsP, writeLengthDist;
 	bool useStdin, useStdout, logEverything, relaxRegion, useRcTrimEnd, qtrimPostRm, addBarcodeAdapter;
@@ -88,7 +90,7 @@ struct Options{
                 whitelist      = "";
                 regionsFile    = "";
 
-
+		rmMulti           = false;
 		isPaired          = false;
 		useAdapterFile    = false;
 		useNumberTag      = false;
@@ -212,6 +214,9 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     addOption(parser, ArgParseOption("w", "whitelist", "Cell Barcodes which were determined to be valid by chromium pipeline.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
+
+    addOption(parser, ArgParseOption("rm", "rmMulti", "Remove any Duplicated Read."));
+
 
 	addOption(parser, ArgParseOption("p", "reads2", "Second input file of paired reads, gz and bz2 files supported.", ARG::INPUT_FILE));
 	addOption(parser, ArgParseOption("i", "interleaved", "Interleaved format for first input set with paired reads."));
@@ -587,6 +592,7 @@ void parseCmdLine(seqan::ArgumentParser &parser, std::string version, int argc, 
 		cout << getFlexbarURL()           << endl;
 		exit(0);
 	}
+
 	if(isSet(parser, "man-help")){
 		printHelp(parser, cout, "man", true);
 		cout << endl;
@@ -794,6 +800,8 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 		getOptionValue(o.adapterSeq, parser, "adapter-seq");
 		o.adapRm = NORMAL;
 	}
+
+    o.rmMulti = isSet(parser, "rmMulti");
 
 	if(isSet(parser, "adapters2") && o.adapRm == NORMAL && o.isPaired){
 		getOptionValue(o.adapter2File, parser, "adapters2");

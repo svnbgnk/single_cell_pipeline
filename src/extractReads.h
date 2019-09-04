@@ -25,7 +25,7 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     int threshold = -1;
     int step = 1;
     int overlap = 0;
-    bool verbose = true;
+    bool verbose = false;
     bool overlapping = false;
     bool rmDup = true;
     int threads = o.nThreads;
@@ -264,6 +264,30 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
         close(bamFileIn);
 //     }
 
+
+    typedef map<seqan::CharString, short>  IDMAP;
+    IDMAP idMap_occ;
+
+    if (o.rmMulti){
+        for(int i = 0; i < recordtable.size(); ++i){
+            for(int j = 0; j < recordtable[i].size(); ++j){
+                auto & record = recordtable[i][j];
+                IDMAP::iterator it;
+                it = idMap_occ.find(record.qName);
+                if(it != idMap_occ.end())
+                {
+//                     std::cout << (int) it->second << "\n";
+                    if (it->second == 1)
+                        idMap_occ[record.qName] = 2;
+                }
+                else
+                {
+                    idMap_occ[record.qName] = 1;
+                }
+            }
+        }
+    }
+
     std::vector<BamAlignmentRecord> uniqueExtractedReads;
     //post processing making reads unique
     map<seqan::CharString, short> idMap;
@@ -271,23 +295,44 @@ std::vector<BamAlignmentRecord > extractReads(Options &o)
     uint32_t empty_dups = 0;
     uint32_t unique = 0;
 
-    //TODO use move int
     for(int i = 0; i < recordtable.size(); ++i){
         for(int j = 0; j < recordtable[i].size(); ++j){
             auto & record = recordtable[i][j];
             if(length(record.seq) == 0){
                 ++empty_dups;
-
+//                 std::cout << "emptyDups: " << record.qName << "\n";
             }
             else
             {
-                if(!rmDup || idMap.count(record.qName) != 1){
-                    idMap[record.qName] = 1;
-                    uniqueExtractedReads.push_back(std::move(recordtable[i][j]));
+                IDMAP::iterator it;
+                if (o.rmMulti){
+                    it = idMap_occ.find(record.qName);
+                    if(it != idMap_occ.end()){
+                        if(it->second == 1){
+                            uniqueExtractedReads.push_back(std::move(recordtable[i][j]));
+                        }else{
+//                             std::cout << "Dups: " << record.qName << "\n";
+                            ++dups;
+                        }
+                    }
+                    else
+                    {
+                        std::cout << "This should not happen\n";
+                    }
                 }
                 else
                 {
-                    ++dups;
+                    it = idMap.find(record.qName);
+                    if(it == idMap.end())
+                    {
+                        idMap[record.qName] = 1;
+                        uniqueExtractedReads.push_back(std::move(recordtable[i][j]));
+                    }
+                    else
+                    {
+//                         std::cout << "Dups: " << record.qName << "\n";
+                        ++dups;
+                    }
                 }
             }
         }
