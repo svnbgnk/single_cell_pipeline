@@ -692,7 +692,6 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	}
 	else *out << endl;
 
-    std::cout << "Is set: " << isSet(parser, "fq") << "\n";
     o.format = (isSet(parser, "fq")) ? flexbar::FASTQ : flexbar::FASTA;
 
 	getOptionValue(o.targetName, parser, "target");

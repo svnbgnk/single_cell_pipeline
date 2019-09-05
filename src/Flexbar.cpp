@@ -26,12 +26,15 @@
 #include "removeCDNA.h"
 #include "splitReads.h"
 #include "FlexbarTypes.h"
+#include <chrono>
 
 int main(int argc, const char* argv[]){
 
     //TODO set Log file to leftTail in the beginning
 	using namespace std;
 	using namespace seqan;
+
+    auto start = std::chrono::high_resolution_clock::now();
 
 	const string version = "3.5.0";
 	const string date    = "May 2019";
@@ -146,6 +149,10 @@ int main(int argc, const char* argv[]){
             startComputation(o);
         }
         std::cout << "Finished Right Tail Barcode Alignment: " << logFileName << "\n";
+
+        auto end = std::chrono::high_resolution_clock::now();
+//         std::chrono::duration<int, std::kilo> elapsed = end - start;
+        std::cout << "Total wall clock runtime " <<chrono::duration_cast<chrono::seconds>(end-start).count() << "s." << "\n";
 
 
 
