@@ -24,10 +24,11 @@ struct Options{
 	std::string htrimLeft, htrimRight;
 
 //     std::tuple<int, int>
-    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > fastaRecords;
+    typedef std::tuple<seqan::CharString, seqan::Dna5String, seqan::CharString> TRecord;
+    std::vector<TRecord> fastaRecords;
 
-    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > leftTail;
-    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > rightTail;
+    std::vector<TRecord>  leftTail;
+    std::vector<TRecord>  rightTail;
 
     bool rmMulti;
 	bool isPaired, useAdapterFile, useNumberTag, useRemovalTag, umiTags, logStdout, skipOutput;
@@ -128,7 +129,8 @@ struct Options{
 		htrimMaxLength  = 0;
 		nBundles        = 0;
 
-		format    = FASTA;
+ 		format    = FASTQ;
+//         format    = FASTA;
 		qual      = SANGER;
 		qTrim     = QOFF;
 		logAlign  = NONE;

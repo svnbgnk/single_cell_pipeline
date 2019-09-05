@@ -99,7 +99,6 @@ int main(int argc, const char* argv[]){
             std::cout << o.rightTail[i].first << "\t" << o.rightTail[i].second << "\n";
         }*/
 
-
         o.fstrmOut.close();
 //         exit(0);
         o.targetName = targetName + "_leftTail";
@@ -148,8 +147,7 @@ int main(int argc, const char* argv[]){
         }
         std::cout << "Finished Right Tail Barcode Alignment: " << logFileName << "\n";
 
-    //o.readsFile     for extractReads
-//     o.readsFile = "";
+
 
 
 

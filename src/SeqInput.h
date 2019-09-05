@@ -16,7 +16,7 @@ private:
 	seqan::FlexbarReadsSeqFileIn seqFileIn;
 	const flexbar::QualTrimType m_qtrim;
 	const flexbar::FileFormat m_format;
-    std::vector<std::pair<seqan::CharString, seqan::Dna5String> > & m_fastaRecords;
+    std::vector<std::tuple<seqan::CharString, seqan::Dna5String, seqan::CharString> > & m_fastaRecords;
 
 	const bool m_preProcess, m_useStdin, m_qtrimPostRm, m_iupacInput;
 	const int m_maxUncalled, m_preTrimBegin, m_preTrimEnd, m_qtrimThresh, m_qtrimWinSize;
@@ -24,7 +24,7 @@ private:
 
 public:
 
-	SeqInput(const Options &o, const std::string filePath, std::vector<std::pair<seqan::CharString, seqan::Dna5String> > & fastaRecords, const bool preProcess, const bool useStdin) :
+	SeqInput(const Options &o, const std::string filePath, std::vector<std::tuple<seqan::CharString, seqan::Dna5String, seqan::CharString> > & fastaRecords, const bool preProcess, const bool useStdin) :
 
 		m_preProcess(preProcess),
 		m_useStdin(useStdin),
@@ -86,8 +86,13 @@ public:
                     inputMutex.lock();
                     int readingPosEnd = (m_fastaRecords.size() > nReads + readingPos) ? (nReads + readingPos) : m_fastaRecords.size();
                     for(int i = readingPos; i < readingPosEnd; ++i){
-                        appendValue(ids, std::move(m_fastaRecords[i].first));
-                        appendValue(seqs, std::move(m_fastaRecords[i].second));
+                        assert(length(get<1>(m_fastaRecords[i])) == length(get<2>(m_fastaRecords[i])));
+//                         std::cout << length(get<1>(m_fastaRecords[i])) << "\t" <<  length(get<2>(m_fastaRecords[i])) << "\n";
+
+                        appendValue(ids, get<0>(std::move(m_fastaRecords[i])));
+                        appendValue(seqs, get<1>(std::move(m_fastaRecords[i])));
+                        if(m_format == FASTQ)
+                            appendValue(quals, get<2>(std::move(m_fastaRecords[i])));
                     }
                     readingPos += nReads;
                     inputMutex.unlock();

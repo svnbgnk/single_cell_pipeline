@@ -3,6 +3,7 @@
 #ifndef FLEXBAR_SEQALIGN_H
 #define FLEXBAR_SEQALIGN_H
 
+#include <assert.h>
 tbb::mutex ouputMutex;
 
 template <typename TSeqStr, typename TString, class TAlgorithm>
@@ -228,6 +229,7 @@ public:
 		if(qIndex_v.size() > 0){
 			for(int i = 0; i < qIndex_v.size(); ++i){
 				TSeqRead seqReadTmp = seqRead;
+                TSeqRead barcode = seqRead;
 				if(!m_logEverything)
 				{
 					//only do one iteration of the loop
@@ -286,9 +288,13 @@ public:
 							if(rCutPos > readLength) rCutPos = readLength;
 
 							erase(seqReadTmp.seq, 0, rCutPos);
+                            erase(barcode.seq, rCutPos, length(barcode.seq));
 
-							if(m_format == FASTQ)
+
+							if(m_format == FASTQ){
 								erase(seqReadTmp.qual, 0, rCutPos);
+                                erase(barcode.qual, rCutPos, length(barcode.qual));
+                            }
 
 							break;
 
@@ -302,10 +308,15 @@ public:
 							// skipped restriction
 							if(rCutPos < 0) rCutPos = 0;
 
-							erase(seqReadTmp.seq, rCutPos, readLength);
+                            assert(length(seqReadTmp.seq) == length(seqReadTmp.qual));
 
-							if(m_format == FASTQ)
+                            erase(seqReadTmp.seq, rCutPos, readLength);
+                            erase(barcode.seq, 0, rCutPos);
+
+							if(m_format == FASTQ){
 								erase(seqReadTmp.qual, rCutPos, readLength);
+                                erase(barcode.qual, 0, rCutPos);
+                            }
 
 							break;
 
@@ -368,6 +379,12 @@ public:
 
 					if(m_format == FASTQ)
 						s << "  remaining qual   " << seqReadTmp.qual << "\n";
+				}
+                if(performRemoval){
+						s << "  barcode seq      " << barcode.seq << "\n";
+
+					if(m_format == FASTQ)
+						s << "  barcode qual     " << barcode.qual << "\n";
 				}
 				s << "\n  Alignment:\n" << endl << am.alString;
 			}

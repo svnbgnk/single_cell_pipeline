@@ -59,7 +59,8 @@ void splitReads(Options &o)
 
     //load Primer alignments from fasta
 
-    std::string fastaFile = o.targetName + ".fasta";
+
+    std::string fastaFile = (o.format == flexbar::FASTA) ? o.targetName + ".fasta" : o.targetName + ".fastq";
     SeqFileIn seqFileInFlex(toCString(fastaFile));
 
 
@@ -83,10 +84,15 @@ void splitReads(Options &o)
     {
         Dna5String read;
         CharString id;
+        CharString qual;
         try
         {
 
-            readRecord(id, read, seqFileInFlex);
+            if(o.format == flexbar::FASTQ)
+                readRecord(id, read, qual, seqFileInFlex);
+            else
+                readRecord(id, read, seqFileInFlex);
+
             Finder<CharString> finder(id);
             Pattern<CharString, Horspool> pattern("_Flexbar_removal_");
             find(finder, pattern);
@@ -118,20 +124,26 @@ void splitReads(Options &o)
                 }
                 //flexbar aligned to RC Primer
                 else if (doRC){
-                    if(readLength > 0 && length(read) > readLength)
+                    if(readLength > 0 && length(read) > readLength){
                         read = suffix(read, length(read) - readLength);
+                        if(o.format == flexbar::FASTQ)
+                            qual = suffix(qual, length(qual) - readLength);
+                    }
                     ++reverseC;
-                    o.rightTail.push_back(make_pair(id, read));
+                    o.rightTail.push_back(make_tuple(id, read, qual));
 //                     writeRecord(seqFileOutRevcomp, id, read);
                 }
                 //flexbar aligned to forward direction of Primer
                 else
                 {
-                    if(readLength > 0 && length(read) > readLength)
+                    if(readLength > 0 && length(read) > readLength){
                         read = prefix(read, readLength);
+                        if(o.format == flexbar::FASTQ)
+                            qual = prefix(qual, readLength);
+                    }
 
                     ++forward;
-                    o.leftTail.push_back(make_pair(id, read));
+                    o.leftTail.push_back(make_tuple(id, read, qual));
 //                     writeRecord(seqFileOut, id, read);
                 }
             }

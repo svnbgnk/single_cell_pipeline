@@ -172,6 +172,8 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
             Dna5String end1 = record.seq;
             Dna5String end2 = record.seq;
             CharString id = record.qName;
+            CharString qual1 = record.qual;
+            CharString qual2 = record.qual;
 
 
             if(verbose){
@@ -194,6 +196,7 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
                 if (match_count > threshold && !found){
 //                     std::cout << "found pos: " << pos << "\n";
                     end1 = prefix(end1, pos + 1);
+                    qual1 = prefix(qual1, pos + 1);
                     found = true;
                 }
                 //calculate end position of prefix according to cigar string
@@ -207,7 +210,7 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
             if(!found){
                 if(verbose)
                     std::cout << "Take whole read since it was not aligned\n";
-                o.fastaRecords.push_back(make_pair(id, record.qName));
+                o.fastaRecords.push_back(make_tuple(id, end1, qual1));
 //                 std::make_tuple(10, "Test", 3.14, std::ref(n), n);
                 continue;
             }
@@ -224,6 +227,7 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
                 if (match_count2 > threshold){
     //                     std::cout << "found pos: " << pos << "\n";
                     end2 = suffix(end2, length(end2) - pos - 1);
+                    qual2 = suffix(qual2, length(qual2) - pos - 1);
                     found2 = true;
                     break;
                 }
@@ -249,6 +253,8 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
                 if(rc){
                     Dna5StringReverseComplement rcend1(end1);
                     Dna5StringReverseComplement rcend2(end2);
+                    ModifiedString<CharString, ModReverse> rcqual1(qual1);
+                    ModifiedString<CharString, ModReverse> rcqual2(qual2);
 
                     if(verbose){
                         std::cout << "Use reverse Complement of reads to restore original orientation.\n";
@@ -256,6 +262,11 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
                         std::cout << "before2: " << end2 << "\n";
                     }
                     Dna5String tmpend1 = rcend1;
+                    CharString tmpqual1 = rcqual1;
+
+                    qual1 = rcqual2;
+                    qual2 = tmpqual1;
+
                     end1 = rcend2;
                     end2 = tmpend1;
                     if(verbose){
@@ -274,8 +285,12 @@ void removeCDNA(Options &o, std::vector<BamAlignmentRecord > & records)
                 idend1 += "_end1";
                 idend2 += "_end2";
 
-                o.fastaRecords.push_back(make_pair(idend1, end1));
-                o.fastaRecords.push_back(make_pair(idend2, end2));
+//                 std::cout << end1 << "\n" << qual1 << "\n";
+                assert(length(end1) == length(qual1));
+                assert(length(end2) == length(qual2));
+
+                o.fastaRecords.push_back(make_tuple(idend1, end1, qual1));
+                o.fastaRecords.push_back(make_tuple(idend2, end2, qual2));
 
     }
 
