@@ -129,8 +129,7 @@ struct Options{
 		htrimMaxLength  = 0;
 		nBundles        = 0;
 
- 		format    = FASTQ;
-//         format    = FASTA;
+        format    = FASTQ;
 		qual      = SANGER;
 		qTrim     = QOFF;
 		logAlign  = NONE;
@@ -218,6 +217,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
 
     addOption(parser, ArgParseOption("rm", "rmMulti", "Remove any Duplicated Read."));
+    addOption(parser, ArgParseOption("fq", "qual", "Report Sequence quality."));
 
 
 	addOption(parser, ArgParseOption("p", "reads2", "Second input file of paired reads, gz and bz2 files supported.", ARG::INPUT_FILE));
@@ -692,6 +692,9 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	}
 	else *out << endl;
 
+    std::cout << "Is set: " << isSet(parser, "fq") << "\n";
+    o.format = (isSet(parser, "fq")) ? flexbar::FASTQ : flexbar::FASTA;
+
 	getOptionValue(o.targetName, parser, "target");
 	*out << "Target name:            " << o.targetName << endl;
 
@@ -699,7 +702,6 @@ void loadOptions(Options &o, seqan::ArgumentParser &parser){
 	     if(o.format == FASTA)   *out << "fasta";
 	else if(o.format == FASTQ)   *out << "fastq";
 	*out << endl;
-
 
 	getOptionValue(o.readsFile, parser, "reads");
 	*out << "Reads file:             ";

@@ -308,14 +308,13 @@ public:
 							// skipped restriction
 							if(rCutPos < 0) rCutPos = 0;
 
-                            assert(length(seqReadTmp.seq) == length(seqReadTmp.qual));
-
                             erase(seqReadTmp.seq, rCutPos, readLength);
                             erase(barcode.seq, 0, rCutPos);
 
 							if(m_format == FASTQ){
 								erase(seqReadTmp.qual, rCutPos, readLength);
                                 erase(barcode.qual, 0, rCutPos);
+                                assert(length(seqReadTmp.seq) == length(seqReadTmp.qual));
                             }
 
 							break;

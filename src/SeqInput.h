@@ -86,13 +86,14 @@ public:
                     inputMutex.lock();
                     int readingPosEnd = (m_fastaRecords.size() > nReads + readingPos) ? (nReads + readingPos) : m_fastaRecords.size();
                     for(int i = readingPos; i < readingPosEnd; ++i){
-                        assert(length(get<1>(m_fastaRecords[i])) == length(get<2>(m_fastaRecords[i])));
 //                         std::cout << length(get<1>(m_fastaRecords[i])) << "\t" <<  length(get<2>(m_fastaRecords[i])) << "\n";
 
                         appendValue(ids, get<0>(std::move(m_fastaRecords[i])));
                         appendValue(seqs, get<1>(std::move(m_fastaRecords[i])));
-                        if(m_format == FASTQ)
+                        if(m_format == FASTQ){
+                            assert(length(get<1>(m_fastaRecords[i])) == length(get<2>(m_fastaRecords[i])));
                             appendValue(quals, get<2>(std::move(m_fastaRecords[i])));
+                        }
                     }
                     readingPos += nReads;
                     inputMutex.unlock();
