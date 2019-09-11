@@ -34,7 +34,6 @@ Use these commands for building:
 
 SingleCellPipe needs a bam alignment file, a barcode whitelist, gtf file containing regions of interest and a primer sequence. Additionally, the target name and further options can be specified. 
 
-[comment]: #	singleCellPipe -r reads -w [-b barcodes] [-a adapters] [options]
 ```
 	singleCellPipe -r nanoporeAlignmentFile -w CellbarcodeWhitelist -rf regionsOfInterest -t Target -as "Primer Sequence" [options]
 ```
