@@ -198,7 +198,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
 	// setLongCopyright(parser, "");
 
 	addDescription(parser, getFlexbarDescription());
-	setShortDescription(parser, "Nanopore read assigment");
+	setShortDescription(parser, "Nanopore read assignment");
 
 // 	addUsageLine(parser, "\\fB-r\\fP reads [\\fB-b\\fP barcodes] [\\fB-a\\fP adapters] [options]");
 
@@ -216,7 +216,7 @@ void defineOptions(seqan::ArgumentParser &parser, const std::string version, con
     addOption(parser, ArgParseOption("rf", "regionsFile", "GTF file defining regions were reads should be extracted from bam file.", ARG::INPUT_FILE));
     addOption(parser, ArgParseOption("as", "adapter-seq", "Single adapter sequence as alternative to adapters option.", ARG::STRING));
 
-    addOption(parser, ArgParseOption("rm", "rmMulti", "Remove any Duplicated Read."));
+    addOption(parser, ArgParseOption("rm", "rmMulti", "Remove all Mulimappers."));
     addOption(parser, ArgParseOption("fq", "qual", "Report Sequence quality."));
 
 
