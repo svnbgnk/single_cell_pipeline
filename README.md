@@ -78,7 +78,7 @@ The primer sequence is given as a plain string in qutations:
 
 ### Output Example
 
-The "CGTCCATCAGTGCGCT" extracted from read read1  has 3 valid alignments to barcodes of the whitelist. The difference two the second best score is 7. 
+The Cellbarcode "CGTCCATCAGTGCGCT" extracted from read1 has 3 valid alignments to barcodes from the whitelist. The difference too the second best score is 7. 
 This is summarized with Best alignment (3/7). 
 
 ```
