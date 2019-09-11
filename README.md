@@ -89,7 +89,8 @@ Sequence removal: left side
   read id          63808c32-5d28-4996-bc4d-7d877753a536_end1_Flexbar_removal_cmdline_Flexbar_removal_AATCGTGCATCATTTC
   read pos         3-19
   score            7
-...
+  .
+  .
 
 
 Alternative alignment:
@@ -99,7 +100,8 @@ Sequence removal: left side
   read id          63808c32-5d28-4996-bc4d-7d877753a536_end1_Flexbar_removal_cmdline_Flexbar_removal_AGTGACTCAGTGCGCT
   read pos         0-17
   score            9
-...
+  .
+  .
 
 
 Best alignment (3/7):
