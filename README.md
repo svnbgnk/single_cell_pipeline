@@ -78,7 +78,7 @@ The primer sequence is given as a plain string in qutations:
 
 ### Output Example
 
-The Cellbarcode CellbarcodeID1 has 3 valid alignments to barcodes of the whitelist. The difference two the second best score is 7. 
+The "CGTCCATCAGTGCGCT" extracted from read read1  has 3 valid alignments to barcodes of the whitelist. The difference two the second best score is 7. 
 This is summarized with Best alignment (3/7). 
 
 ```
@@ -86,7 +86,7 @@ Alternative alignment:
 Sequence removal: left side
   query id         CellbarcodeID2
   query pos        0-16
-  read id          63808c32-5d28-4996-bc4d-7d877753a536_end1_Flexbar_removal_cmdline_Flexbar_removal_AATCGTGCATCATTTC
+  read id          read1_end1_Flexbar_removal_cmdline_Flexbar_removal_AATCGTGCATCATTTC
   read pos         3-19
   score            7
   .
@@ -97,7 +97,7 @@ Alternative alignment:
 Sequence removal: left side
   query id         CellbarcodeID3
   query pos        0-17
-  read id          63808c32-5d28-4996-bc4d-7d877753a536_end1_Flexbar_removal_cmdline_Flexbar_removal_AGTGACTCAGTGCGCT
+  read id          read1_end1_Flexbar_removal_cmdline_Flexbar_removal_AGTGACTCAGTGCGCT
   read pos         0-17
   score            9
   .
@@ -108,7 +108,7 @@ Best alignment (3/7):
 Sequence removal: left side
   query id         CellbarcodeID1
   query pos        0-16
-  read id          63808c32-5d28-4996-bc4d-7d877753a536_end1_Flexbar_removal_cmdline_Flexbar_removal_CGTCCATCAGTGCGCT
+  read id          read1_end1_Flexbar_removal_cmdline_Flexbar_removal_CGTCCATCAGTGCGCT
   read pos         0-16
   score            16
   overlap          16
