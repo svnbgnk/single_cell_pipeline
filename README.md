@@ -5,22 +5,21 @@ This modified version of the program Flexbar assigns barodes to nano nanopore se
     provided adapter sequence and assign barcodes provided in a separate fasta, which could be determine by the
     chromium pipeline.
 
-[comment]: # Mention seqan
-
-[comment]: # Refer to the [manual](https://github.com/seqan/flexbar/wiki) or contact [](https://github.com/jtroehr) for support with this application.
-
 
 ### References
-[comment]: #  Add additional references
+
 Johannes T. Roehr, Christoph Dieterich, Knut Reinert:  
 Flexbar 3.0 – SIMD and multicore parallelization. Bioinformatics 2017.
 
 See article on [PubMed](https://www.ncbi.nlm.nih.gov/pubmed/28541403)
 
-Matthias Dodt, Johannes T. Roehr, Rina Ahmed, Christoph Dieterich:  
-Flexbar – flexible barcode and adapter processing for next-generation sequencing platforms. Biology 2012.
+Döring et al. (2008) Döring A, Weese D, Rausch T, Reinert K. 
+SeqAn an efficient, generic C++ library for sequence analysis. BMC Bioinformatics.
 
-See article on [PubMed](https://www.ncbi.nlm.nih.gov/pubmed/24832523)
+See article on [PubMed](https://www.ncbi.nlm.nih.gov/pubmed/28888961)
+
+
+### Building from source
 
 Cloning:
 	git clone https://github.com/svnbgnk/single_cell_pipeline.git
@@ -31,30 +30,27 @@ Use these commands for building:
 	cmake ../flexbar
 	make
 
-
-### Binaries
-
-For execution of provided Flexbar binaries, the corresponding TBB library has to be available. Downloads contain the library file for runtime. Follow the platform specific instructions below.
-
 ### Program usage
 
 SingleCellPipe needs a bam alignment file, a barcode whitelist, gtf file containing regions of interest and a primer sequence. Additionally, the target name and further options can be specified. 
 
 [comment]: #	singleCellPipe -r reads -w [-b barcodes] [-a adapters] [options]
+```
 	singleCellPipe -r nanoporeAlignmentFile -w CellbarcodeWhitelist -rf regionsOfInterest -t Target -as "Primer Sequence" [options]
-
+```
 
 Refer to the help screen `singleCellPipe -h` for more information.
 
 ### Advanced options
 
-singleCellPipe -r nanoporeAlignmentFile -w CellbarcodeWhitelist -rf regionsOfInterest -t 
- -as "Primer Sequence" -n 40 -N 3 -fq -rm
-
+Specify further option such as the number of cores (-n), multimapper removal (-rm) and outputting sequence qualites (-fq).
+```
+        singleCellPipe -r nanoporeAlignmentFile -w CellbarcodeWhitelist -rf regionsOfInterest -t Target -as "Primer Sequence" -n 40 -rm -fq
+```
 
 ### Input Examples
 
-##Cellbarcode Whitelist
+## Cellbarcode Whitelist
 Ids will be used in log file to identify the align cellbarcode.
 ```
 >CellbarcodeID1
@@ -67,19 +63,22 @@ AGTGACTCAGTGCGCT
 ```
 
 
-##Regions file
+## Regions file
+
 For the regions file only the first, fourth and fifth column are considered. 
 ```
 1	ensembl_havana	gene	65419	71585	.	+	.	gene_id "ENSG00000186092"; gene_version "5"; gene_name "OR4F5"; gene_source "ensembl_havana"; gene_biotype "protein_coding";
 1	ensembl_havana	gene	450703	451697	.	-	.	gene_id "ENSG00000284733"; gene_version "1"; gene_name "OR4F29"; gene_source "ensembl_havana"; gene_biotype "protein_coding";
 ```
-##Primer Sequence
+## Primer Sequence
+
 The primer sequence is given as a plain string in qutations:
 ```
  -as "CTACACGACGCTCTTCCGATCT"
 ```
 
-###Output 
+### Output Example
+
 The Cellbarcode CellbarcodeID1 has 3 valid alignments to barcodes of the whitelist. The difference two the second best score is 7. 
 This is summarized with Best alignment (3/7). 
 
